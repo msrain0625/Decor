@@ -1,6 +1,6 @@
 #!/bin/bash
 CUDA_VISIBLE_DEVICES=0 python tools/relation_train_net.py \
-    --config-file 'configs/mp_vg.yaml' \
+    --config-file 'configs/decor_vg_predcls.yaml' \
     --eval-only \
     MODEL.WEIGHT "checkpoints/predcls-0.5/model_final.pth" \
     MODEL.ROI_RELATION_HEAD.USE_GT_BOX True \
