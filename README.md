@@ -1,40 +1,39 @@
 # DeCoR: Gradient-Relieved Multi-path Prototype Learning for Long-Tailed Scene Graph Generation
 
-This repository provides the official implementation of **DeCoR**, a gradient-relieved multi-path prototype learning framework for long-tailed Scene Graph Generation (SGG).
+This repository provides the implementation of **DeCoR**, a gradient-relieved multi-path prototype learning framework for long-tailed Scene Graph Generation (SGG).
 
 DeCoR improves prototype-based predicate prediction with two complementary modules:
 
-* **Multi-path Prototype Branch (MPB)** expands single-path prototype matching into multiple visual prototype pathways.
+* **Multi-path Prototype Branch (MPB)** expands single-path prototype matching into multiple prototype pathways.
 * **Gradient Relief Head (GRH)** introduces a detached sparse correction route for selected high-pressure predicate groups.
 
 > **Current release.**
-> This repository currently provides the cleaned training and evaluation code for the main **Visual Genome PredCls** setting, which directly evaluates the proposed predicate prediction head. Scripts and configurations for SGCls, SGDet, and GQA are being organized and will be released progressively.
-
----
-
-## News
-
-* `[2026.xx.xx]` Initial release of DeCoR for Visual Genome PredCls.
-* `[2026.xx.xx]` Checkpoints and logs will be available through Google Drive and OneDrive.
+> This release currently supports the main **Visual Genome PredCls** setting, which directly evaluates the proposed predicate prediction head. Scripts and configurations for SGCls, SGDet, and GQA are being organized.
 
 ---
 
 ## Installation
 
-# Install PyTorch according to your CUDA version first.
-# Our tested environment uses PyTorch 2.7.0 + CUDA 12.8.
-pip install torch==2.7.0 torchvision --index-url https://download.pytorch.org/whl/cu128
+Our tested environment uses **Python 3.12.3**, **PyTorch 2.7.0 + CUDA 12.8**, and an **NVIDIA A6000** GPU.
 
+Please install PyTorch according to your CUDA version. For CUDA 12.8, you may use:
+
+```bash
+pip install torch==2.7.0 torchvision --index-url https://download.pytorch.org/whl/cu128
+```
+
+Then install the remaining dependencies and build the project:
+
+```bash
 pip install -r requirements.txt
 python setup.py build develop
+```
 
 ---
 
 ## Dataset Preparation
 
-The current cleaned release supports **Visual Genome PredCls**.
-
-Please prepare Visual Genome following the common SGG preprocessing protocol. The expected dataset structure is:
+The current release uses **Visual Genome** under the PredCls protocol. Please prepare the dataset with the following structure:
 
 ```text
 DeCoR/
@@ -43,23 +42,16 @@ DeCoR/
       VG-SGG-dicts-with-attri.json
       VG-SGG.h5
       image_data.json
-      imagedb_1024.h5
       glove.6B.200d.pt
 ```
 
-If your dataset is stored elsewhere, you can create a symbolic link:
+If your dataset is stored elsewhere, create a symbolic link:
 
 ```bash
 ln -s /path/to/your/datasets datasets
 ```
 
-For example:
-
-```bash
-ln -s /root/autodl-tmp/PENET/datasets datasets
-```
-
-Please make sure the following files exist:
+Please check that the following files exist:
 
 ```bash
 ls datasets/vg/VG-SGG-dicts-with-attri.json
@@ -80,7 +72,7 @@ DeCoR/
       model_final.pth
 ```
 
-You may also create a symbolic link:
+Alternatively, create a symbolic link:
 
 ```bash
 mkdir -p checkpoints/pretrained_faster_rcnn
@@ -92,164 +84,66 @@ ln -s /path/to/pretrained_detector/model_final.pth \
 
 ## Model Weights
 
-We provide checkpoints and logs for the released VG PredCls setting. Due to random seeds and hardware differences, reproduced results may have minor variations from the reported numbers.
+We provide the checkpoint and log for the released VG PredCls setting. Due to random seeds and hardware differences, reproduced results may have minor variations.
 
-| Model           | Setting    | mR@50 | mR@100 | F@50 | F@100 | Google Drive | Log  |
-| --------------- | ---------- | ----: | -----: | ---: | ----: | ------------ | ---- |
-| PE-Net baseline | VG PredCls |  31.5 |   33.8 | 42.4 |  45.0 | -            | -    |
-| DeCoR           | VG PredCls |  36.8 |   39.2 | 43.9 |  46.3 | [model_final.pth](https://drive.google.com/file/d/1gkNewhyzcVQxLWESmfy72FWjo9GmS5Yl/view?usp=drive_link)        | [test_result.txt](https://drive.google.com/file/d/1PwD4vKRHozXCsVmpYayXB6NVLxPYnS3S/view?usp=drive_link) |
+| Model           | Setting    | mR@50 | mR@100 | F@50 | F@100 | Checkpoint                                                                                               | Log                                                                                                      |
+| --------------- | ---------- | ----- | ------ | ---- | ----- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| PE-Net baseline | VG PredCls | 31.5  | 33.8   | 42.4 | 45.0  | -                                                                                                        | -                                                                                                        |
+| DeCoR           | VG PredCls | 36.8  | 39.2   | 43.9 | 46.3  | [model_final.pth](https://drive.google.com/file/d/1gkNewhyzcVQxLWESmfy72FWjo9GmS5Yl/view?usp=drive_link) | [test_result.txt](https://drive.google.com/file/d/1PwD4vKRHozXCsVmpYayXB6NVLxPYnS3S/view?usp=drive_link) |
 
-Recommended checkpoint structure:
+Please place the downloaded checkpoint as:
 
 ```text
-DeCoR/
-  checkpoints/
-    decor_vg_predcls/
-      model_final.pth
-      config.yaml
-      log.txt
+checkpoints/decor_vg_predcls/model_final.pth
 ```
 
 ---
 
-## Training on VG PredCls
+## Training
 
-We provide the cleaned training script for Visual Genome PredCls.
+To train DeCoR on Visual Genome PredCls:
 
 ```bash
 bash shell/train_predcls.sh
 ```
 
-The script is equivalent to:
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python tools/relation_train_net.py \
-  --config-file configs/decor_vg_predcls.yaml \
-  MODEL.ROI_RELATION_HEAD.USE_GT_BOX True \
-  MODEL.ROI_RELATION_HEAD.USE_GT_OBJECT_LABEL True \
-  MODEL.ROI_RELATION_HEAD.PREDICT_USE_BIAS True \
-  MODEL.ROI_RELATION_HEAD.PREDICTOR PrototypeEmbeddingNetwork \
-  DTYPE float32 \
-  SOLVER.IMS_PER_BATCH 8 \
-  TEST.IMS_PER_BATCH 1 \
-  SOLVER.MAX_ITER 60000 \
-  SOLVER.BASE_LR 1e-3 \
-  SOLVER.SCHEDULE.TYPE WarmupMultiStepLR \
-  MODEL.ROI_RELATION_HEAD.BATCH_SIZE_PER_IMAGE 512 \
-  SOLVER.STEPS '(28000,48000)' \
-  SOLVER.VAL_PERIOD 5000 \
-  SOLVER.CHECKPOINT_PERIOD 5000 \
-  SOLVER.PRE_VAL False \
-  SOLVER.GRAD_NORM_CLIP 5.0 \
-  OUTPUT_DIR checkpoints/decor_vg_predcls \
-  INPUT.MIN_SIZE_TRAIN '(600,)' \
-  INPUT.MAX_SIZE_TRAIN 1000 \
-  INPUT.MIN_SIZE_TEST 600 \
-  INPUT.MAX_SIZE_TEST 1000 \
-  DATALOADER.NUM_WORKERS 4
-```
-
-The high-pressure predicate groups used by GRH are stored in:
+The script uses:
 
 ```text
-configs/groups/vg_predcls_high_pressure_groups.json
+configs/decor_vg_predcls.yaml
+```
+
+and saves checkpoints to:
+
+```text
+checkpoints/decor_vg_predcls/
 ```
 
 ---
 
-## Evaluation on VG PredCls
+## TEST
 
-To evaluate a trained checkpoint:
+To evaluate the released checkpoint on Visual Genome PredCls:
 
 ```bash
 bash shell/test_predcls.sh
-```
-
-A typical evaluation command is:
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python tools/relation_test_net.py \
-  --config-file configs/decor_vg_predcls.yaml \
-  MODEL.ROI_RELATION_HEAD.USE_GT_BOX True \
-  MODEL.ROI_RELATION_HEAD.USE_GT_OBJECT_LABEL True \
-  MODEL.ROI_RELATION_HEAD.PREDICTOR PrototypeEmbeddingNetwork \
-  MODEL.WEIGHT checkpoints/decor_vg_predcls/model_final.pth \
-  OUTPUT_DIR checkpoints/decor_vg_predcls \
-  TEST.IMS_PER_BATCH 1
 ```
 
 The evaluation reports Recall@K, mean Recall@K, and F@K.
 
 ---
 
-## Current Release Scope
+## Release Scope
 
-The current release includes:
+This repository currently includes:
 
-* Visual Genome PredCls training code
-* Visual Genome PredCls evaluation code
+* Visual Genome PredCls training and evaluation scripts
 * Multi-path Prototype Branch (MPB)
 * Gradient Relief Head (GRH)
-* VG PredCls high-pressure group configuration
-* Checkpoint and log placeholders for VG PredCls
+* Configuration for the released VG PredCls setting
+* Checkpoint and evaluation log for DeCoR on VG PredCls
 
-The following components are being organized:
-
-* SGCls scripts and configurations
-* SGDet scripts and configurations
-* GQA scripts and configurations
-* Additional checkpoints and logs
-
----
-
-## Project Structure
-
-```text
-DeCoR/
-  configs/
-    decor_vg_predcls.yaml
-    groups/
-      vg_predcls_high_pressure_groups.json
-
-  shell/
-    train_predcls.sh
-    test_predcls.sh
-
-  tools/
-    relation_train_net.py
-    relation_test_net.py
-
-  hetsgg/
-    data/
-    modeling/
-      roi_heads/
-        relation_head/
-          relation_head.py
-          roi_relation_predictors.py
-          loss.py
-
-  proto/
-
-  checkpoints/
-    pretrained_faster_rcnn/
-    decor_vg_predcls/
-
-  datasets/
-    vg/
-
-  README.md
-  requirements.txt
-  setup.py
-```
-
----
-
-## Notes
-
-* DeCoR is designed to improve the predicate prediction head.
-* PredCls is the main protocol for validating predicate recognition because it removes object detection and object classification errors.
-* The released VG PredCls code is the cleaned and reproducible setting for the main predicate prediction experiment.
-* SGCls, SGDet, and GQA use task-specific configurations and are being cleaned before release.
+The remaining protocols, including SGCls, SGDet, and GQA, are being cleaned and will be released progressively.
 
 ---
 
@@ -258,3 +152,15 @@ DeCoR/
 This codebase is developed based on the PE-Net / Scene Graph Benchmark framework. We thank the authors of the original repositories for their contributions to the SGG community.
 
 ---
+
+## Citation
+
+If you find this project useful, please cite our paper:
+
+```bibtex
+@misc{decor2026,
+  title        = {DeCoR: Gradient-Relieved Multi-path Prototype Learning for Long-Tailed Scene Graph Generation},
+  author       = {DeCoR Authors},
+  year         = {2026},
+  note         = {Manuscript under review}
+}
