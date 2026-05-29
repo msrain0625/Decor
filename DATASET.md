@@ -1,6 +1,6 @@
 # Dataset Preparation
 
-Decor is evaluated on three datasets: **Visual Genome (VG-150)**, **GQA-200**.
+Decor is evaluated on two datasets: **Visual Genome (VG-150)**, **GQA-200**.
 
 ## Visual Genome (VG-150)
 
