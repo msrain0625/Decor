@@ -1,0 +1,15 @@
+## code composition
+build/
+datasets/
+
+## running code
+checkpoints/
+featurebank/
+
+
+__pycache__
+
+predicate_dict.pkl
+predicate_dict_gqa.pkl
+
+maskrcnn_benchmark.egg-info/
