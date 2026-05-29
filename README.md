@@ -94,10 +94,10 @@ ln -s /path/to/pretrained_detector/model_final.pth \
 
 We provide checkpoints and logs for the released VG PredCls setting. Due to random seeds and hardware differences, reproduced results may have minor variations from the reported numbers.
 
-| Model           | Setting    | mR@50 | mR@100 | F@50 | F@100 | Google Drive | OneDrive | Log  |
-| --------------- | ---------- | ----: | -----: | ---: | ----: | ------------ | -------- | ---- |
-| PE-Net baseline | VG PredCls |  31.5 |   33.8 | 42.4 |  45.0 | -            | -        | -    |
-| DeCoR           | VG PredCls |  36.8 |   39.2 | 43.9 |  46.3 | TODO         | TODO     | TODO |
+| Model           | Setting    | mR@50 | mR@100 | F@50 | F@100 | Google Drive | Log  |
+| --------------- | ---------- | ----: | -----: | ---: | ----: | ------------ | ---- |
+| PE-Net baseline | VG PredCls |  31.5 |   33.8 | 42.4 |  45.0 | -            | -    |
+| DeCoR           | VG PredCls |  36.8 |   39.2 | 43.9 |  46.3 | [TODO](https://drive.google.com/file/d/1gkNewhyzcVQxLWESmfy72FWjo9GmS5Yl/view?usp=drive_link)        | TODO |
 
 Recommended checkpoint structure:
 
