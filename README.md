@@ -258,28 +258,3 @@ DeCoR/
 This codebase is developed based on the PE-Net / Scene Graph Benchmark framework. We thank the authors of the original repositories for their contributions to the SGG community.
 
 ---
-
-## Citation
-
-If you find this project useful, please cite our paper:
-
-```bibtex
-@inproceedings{decor2026,
-  title     = {DeCoR: Gradient-Relieved Multi-path Prototype Learning for Long-Tailed Scene Graph Generation},
-  author    = {Anonymous Authors},
-  booktitle = {PRCV},
-  year      = {2026}
-}
-```
-
-Please also consider citing PE-Net if you use the prototype-based SGG framework:
-
-```bibtex
-@inproceedings{zheng2023prototype,
-  title     = {Prototype-based Embedding Network for Scene Graph Generation},
-  author    = {Zheng, Chaofan and Lyu, Xinyu and Gao, Lianli and Dai, Bo and Song, Jingkuan},
-  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
-  pages     = {22783--22792},
-  year      = {2023}
-}
-```
