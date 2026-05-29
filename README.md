@@ -21,17 +21,12 @@ DeCoR improves prototype-based predicate prediction with two complementary modul
 
 ## Installation
 
-The codebase is developed based on the PE-Net / Scene Graph Benchmark framework.
-
-```bash
-conda create -n decor python=3.8 -y
-conda activate decor
+# Install PyTorch according to your CUDA version first.
+# Our tested environment uses PyTorch 2.7.0 + CUDA 12.8.
+pip install torch==2.7.0 torchvision --index-url https://download.pytorch.org/whl/cu128
 
 pip install -r requirements.txt
 python setup.py build develop
-```
-
-If you already have a working PE-Net or HetSGG environment, you can reuse the same environment and dataset preprocessing.
 
 ---
 
