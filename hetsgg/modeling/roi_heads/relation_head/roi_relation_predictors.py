@@ -48,9 +48,6 @@ def build_predicate_to_cluster():
     return p2c
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# 几何特征 (9 维, 已做 NaN/Inf 防御)
-# ════════════════════════════════════════════════════════════════════════════
 def compute_pair_geometry(sub_box, obj_box):
     eps = 1e-6
     sx = (sub_box[:, 0] + sub_box[:, 2]) / 2
@@ -95,11 +92,7 @@ def compute_pair_geometry(sub_box, obj_box):
     return geo
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# Cluster Refine Head
-#   5 路独立投影 → 拼接 → 融合层 → 簇内原型相似度
-#   forward 可选返回 fused_emb 用于 anchor loss
-# ════════════════════════════════════════════════════════════════════════════
+
 class ClusterRefineHead(nn.Module):
     def __init__(self, cluster_size,
                  rel_dim=2048, union_dim=4096, obj_vis_dim=2048,
@@ -366,9 +359,7 @@ class PrototypeEmbeddingNetwork(nn.Module):
             self.freq_bias = FrequencyBias(config, statistics)
             self.freq_lambda = nn.Parameter(torch.Tensor([1.0]), requires_grad=False)
 
-        # ════════════════════════════════════════════════════════════════════
-        # [v1.5] Cluster Refine Heads (4 簇,5 路融合,GloVe 初始化原型)
-        # ════════════════════════════════════════════════════════════════════
+
         self.num_clusters = NUM_CLUSTERS
         predicate_to_cluster = build_predicate_to_cluster()
         self.register_buffer("predicate_to_cluster", predicate_to_cluster)
@@ -396,7 +387,6 @@ class PrototypeEmbeddingNetwork(nn.Module):
                 )
             )
 
-        # 融合权重与 loss 权重 (与 v1 一致, 不引入 warmup)
         self.refine_alpha = 0.5
         self.refine_loss_weight = 0.3
         self.anchor_loss_weight = 0.3
@@ -409,11 +399,6 @@ class PrototypeEmbeddingNetwork(nn.Module):
     def get_cluster_members(self, c_id):
         return getattr(self, f"cluster_members_{c_id}")
 
-    # ════════════════════════════════════════════════════════════════════════
-    # [v1.5 核心] 计算 refine_correction
-    #   routing_labels: 训练时传 GT 标签, 推理时传 p_hat
-    #   return_fused: 训练时为 True, 同时返回各簇 fused_emb 用于 anchor loss
-    # ════════════════════════════════════════════════════════════════════════
     def compute_refine_correction(self, routing_labels,
                                   rel_feat, union_feat,
                                   sub_vis, obj_vis,
@@ -551,9 +536,6 @@ class PrototypeEmbeddingNetwork(nn.Module):
         sem_pred = self.vis2sem(self.down_samp(union_features))
         gate_sem_pred = torch.sigmoid(self.gate_pred(cat((fusion_so, sem_pred), dim=-1)))
 
-        # ════════════════════════════════════════════════════════════════════
-        # 5 套视觉原型并行 max
-        # ════════════════════════════════════════════════════════════════════
         vis_proto_0_w = self.vis_W_0(self.vis_embed_0.weight)
         vis_rep_0 = self.norm_vis_rep_0(
             self.dropout_vis_rep_0(torch.relu(self.linear_vis_rep_0(rel_feat))) + rel_feat
@@ -618,9 +600,6 @@ class PrototypeEmbeddingNetwork(nn.Module):
                                       vis_dist_3, vis_dist_4], dim=0)
         vis_dist_full = vis_dist_stack.max(dim=0)[0]
 
-        # ════════════════════════════════════════════════════════════════════
-        # 语义分支
-        # ════════════════════════════════════════════════════════════════════
         rel_rep = fusion_so - sem_pred * gate_sem_pred
         predicate_proto = self.W_pred(self.rel_embed.weight)
 
@@ -633,15 +612,8 @@ class PrototypeEmbeddingNetwork(nn.Module):
 
         sem_dist = rel_rep_norm @ predicate_proto_norm.t() * self.logit_scale.exp()
 
-        # ════════════════════════════════════════════════════════════════════
-        # Stage 1: base 全局判别
-        # ════════════════════════════════════════════════════════════════════
         base_logits = sem_dist + vis_dist_full
 
-        # ════════════════════════════════════════════════════════════════════
-        # Stage 2: cluster_head 二阶段加性修正
-        #   [Fix 1] 训练时按 GT 路由,推理时按 p_hat 路由
-        # ════════════════════════════════════════════════════════════════════
         p_hat = base_logits.argmax(dim=-1).detach()
 
         if self.training:
@@ -673,9 +645,6 @@ class PrototypeEmbeddingNetwork(nn.Module):
         rel_dists_split = final_logits.split(num_rels, dim=0)
 
         if self.training:
-            # ════════════════════════════════════════════════════════════════
-            # 主干 prototype 正则化 (与 v1 一致)
-            # ════════════════════════════════════════════════════════════════
             l21 = self.get_l2loss(predicate_proto_norm)
             add_losses.update({"l21_loss": l21 * 0.8})
 
@@ -733,12 +702,6 @@ class PrototypeEmbeddingNetwork(nn.Module):
             loss_dis_vis_4 = self.get_rep_pro_loss(vis_rep_4, predicate_proto_vis_4, rel_labels_cat)
             add_losses.update({"loss_dis_vis_4": loss_dis_vis_4 * 0.2})
 
-            # ════════════════════════════════════════════════════════════════
-            # [Fix 1] Cluster Refinement Loss
-            #   监督 mask: 只要 GT 落在任何混淆簇就监督 (不再要求 base 已对)
-            #   注意: 训练时 routing 用 GT, 所以 refine_correction[i] 对应的 cluster
-            #         恰好是 gt_cluster[i],无需额外 mask 簇
-            # ════════════════════════════════════════════════════════════════
             with torch.no_grad():
                 gt_cluster = self.predicate_to_cluster[rel_labels_cat]
                 supervised_mask = (gt_cluster != -1)
@@ -771,11 +734,6 @@ class PrototypeEmbeddingNetwork(nn.Module):
             else:
                 add_losses["loss_cluster_refine"] = rel_feat.new_zeros(())
 
-            # ════════════════════════════════════════════════════════════════
-            # [Fix 3a] Anchor Loss (InfoNCE on fused_emb ↔ cluster.protos)
-            #   让 wearing 样本的 fused_emb 拉向 wearing proto, 推离 wears proto
-            #   这是数据驱动的方向分离, 真正的判别轴学习
-            # ════════════════════════════════════════════════════════════════
             anchor_losses = []
             if fused_per_cluster is not None:
                 for c, (rows, fused_emb) in fused_per_cluster.items():
@@ -796,9 +754,6 @@ class PrototypeEmbeddingNetwork(nn.Module):
             else:
                 add_losses["loss_anchor"] = rel_feat.new_zeros(())
 
-            # ════════════════════════════════════════════════════════════════
-            # [Fix 3b] Cluster proto push-apart (margin hinge, 仅防塌缩)
-            # ════════════════════════════════════════════════════════════════
             for c in range(self.num_clusters):
                 proto_c = self.cluster_heads[c].protos
                 n = proto_c.size(0)
