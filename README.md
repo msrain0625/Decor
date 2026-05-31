@@ -89,7 +89,7 @@ We provide the checkpoint and log for the released VG PredCls setting. Due to ra
 | Model           | Setting    | mR@50 | mR@100 | F@50 | F@100 | Checkpoint                                                                                               | Log                                                                                                      |
 | --------------- | ---------- | ----- | ------ | ---- | ----- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | PE-Net baseline | VG PredCls | 31.5  | 33.8   | 42.4 | 45.0  | -                                                                                                        | -                                                                                                        |
-| DeCoR           | VG PredCls | 36.8  | 39.2   | 43.9 | 46.3  | [model_final.pth](https://drive.google.com/file/d/1gkNewhyzcVQxLWESmfy72FWjo9GmS5Yl/view?usp=drive_link) | [test_result.txt](https://drive.google.com/file/d/1PwD4vKRHozXCsVmpYayXB6NVLxPYnS3S/view?usp=drive_link) |
+| DeCoR           | VG PredCls | 36.8  | 39.1   | 43.9 | 46.3  | [model_final.pth](https://drive.google.com/file/d/1gkNewhyzcVQxLWESmfy72FWjo9GmS5Yl/view?usp=drive_link) | [test_result.txt](https://drive.google.com/file/d/1PwD4vKRHozXCsVmpYayXB6NVLxPYnS3S/view?usp=drive_link) |
 
 Please place the downloaded checkpoint as:
 
